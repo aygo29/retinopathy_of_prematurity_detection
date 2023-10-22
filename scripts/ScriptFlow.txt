@@ -1,0 +1,103 @@
+RUN:
+    For each script use the following commands to understand the arguments required by them
+    [py|python|python3] script_name.py --help
+
+
+DATA FOLDER STRUCTURE:
+
+    Data/
+    |
+    | PatientID/
+    |   | VisitDate/ (format yyyymmddhhmmss)
+    |   | 
+    |   ...
+    ...
+
+
+SCRIPT DOCS:
+
+    Mapper.py:
+        Requires:
+            null
+        Input:
+            src - Original obtained data folder
+            -e - Flag to encrypted the folder names
+            -d - Flag to decrypt folder names
+            keys - Path where the json file will be created
+        Output:
+            keys - Path where the key-value pair file will be written (Mapping.json)
+
+        Renames the folders in the data folder with their SHA-256 Encryption and generates a Key-Value pair of
+        original folder name and it's matching SHA-256 Encryption.
+        (SHA-256 is a one-way encryption)
+
+
+    DeleteExt.py:
+        Requires:
+            null
+        Input:
+            src - path to data folder (need not be original)
+            --delete - The script will only delete the files if this flag is added else it will just count
+        Output:
+            void
+
+        Deletes all files in the directory that match a particular file extension
+
+
+    Thumbs.py:
+        Requires:
+            null
+        Input:
+            src - data folder (need not be the original)
+            --delete -  The script will only delete the thumbnails if this flag is added else it'll just count
+                        the number of thumbnails
+        Ouptut:
+            void
+        
+        Deletes all thumbnails from the data folder. All thumbnail images followed the naming format given below
+        -> <name>_TN.jpg
+        Script deletes files that contain "_TN" in the name
+
+
+    TrimCSV.py:
+        Requires:
+            Mapper.py
+        Input:
+            xlsx - Original csv file recieved with the data
+            json - The key-value json generated from Mapper.py
+            csv - Path where the trimmed csv will be written
+        Output:
+            csv - A trimmed csv containing all the relevant data for restructuring the dataset for training
+
+        Regularizes the csv patient id and folder patient id formats which were mistmatched. Uses these regularized
+        entries to generate a new csv with the SHA-256 encrypted names, along with all the columns that will be required
+        for data prep. The trimmed CSV is also devoid of entries which do not exist in the data folder.
+
+
+    TrimDir.py:
+        Requires:
+            TrimCSV.py
+        Input:
+            src - data folder (non original)
+            csv - Path to trimmed csv
+            --delete - To delete directories else it will just count
+        Output:
+            void
+
+        Scans through the data folder and deletes the folders for which csv entries do not exist
+
+
+    DataPrep.py:
+        Requires:
+            DeleteExt.py TrimDir.py
+        Input:
+            src - Path to the data folder using which the structured data will be generated
+            csv - The TrimmedCSV which will be used to build the structed data
+            dest - Path where the prepped data will be created
+            --move - Add this flag to move the images from one src to destination, else the script will copy
+            --decision - Add this flag to classify data according to the decision column else it will classify according to LS
+        Outpu:
+            structured data that will be used for training models
+        
+        Move images matching to rop stages in the csv in correct folders. Also handles multiple entries of a patient
+        by matching it with the date of visit field
