@@ -6,4 +6,4 @@
 1. Decision classification (urgent treatment, needs follow up, ROP discharge)
 2. Optic Disc classification
 3. Anterior Image classification
-4. ROP staging, Plus disease classification, Blood vessel segmentation
+4. ROP staging, Plus disease classification
